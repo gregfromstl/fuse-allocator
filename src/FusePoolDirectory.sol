@@ -2,8 +2,8 @@
 pragma solidity 0.8.7;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin-contracts-upgradable/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin-contracts-upgradable/contracts/access/OwnableUpgradeable.sol";
 
 import "./Comptroller.sol";
 import "./Unitroller.sol";
