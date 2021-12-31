@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/util/SafeERC20.sol";
 
 import "./FusePoolDirectory.sol";
 import "./CTokenInterfaces.sol";
@@ -33,19 +34,57 @@ contract FuseAllocator is Ownable {
     fToken.mint(amount);
   }
 
-  // function enterMarkets(string[]) external onlyOwner {
-  //   return;
-  // }
+  /**
+   * @notice Redeem the specified fTokens and transfer redeemed tokens to the treasury / contract owner
+   * @dev The amount of tokens received is based on the current exchange rate (https://docs.rari.capital/fuse/#exchange-rate)
+   */
+  function withdraw(address tokenAddress, address fTokenAddress)
+    external
+    onlyOwner
+  {
+    CErc20Interface fToken = CErc20Interface(fTokenAddress);
+    fToken.redeem(fToken.balanceOf(address(this)));
 
-  // function exitMarket(string) external onlyOwner {
-  //   return;
-  // }
+    ERC20 token = ERC20(tokenAddress);
+    safeTransferFrom(
+      token,
+      address(this),
+      owner(),
+      token.balanceOf(address(this))
+    ); // send all withdrawn tokens to treasury
+  }
 
-  // function withdrawAmount(string, uint256) external onlyOwner {
-  //   return;
-  // }
+  /**
+   * @notice Returns the names of available pools to enter
+   */
+  function getAvailablePools() external view returns (string[] availablePools) {
+    (indexes, pools) = directory.getPublicPools();
+    string[] memory availablePools = new string[](pools.length);
+    for (uint256 i = 0; i < pools.length; i += 1) {
+      (name, , , , ) = pools[i];
+      availablePools[i] = name;
+    }
+  }
 
-  // function withdrawAll(string) external onlyOwner {
-  //   return;
-  // }
+  function getComptroller(string poolName) internal view returns (Comptroller) {
+    (indexes, pools) = directory.getPublicPools();
+    string[] memory availablePools = new string[](pools.length);
+    for (uint256 i = 0; i < pools.length; i += 1) {
+      (name, , comptroller, , ) = pools[i];
+      if (name == poolName) {
+        return comptroller;
+      }
+    }
+    // THROW ERROR
+  }
+
+  function enterPool(string pool, string[] fTokens) external onlyOwner {
+    Comptroller comptroller = getComptroller(pool);
+    comptroller.enterMarkets(fTokens);
+  }
+
+  function enterPool(string pool, string fToken) external onlyOwner {
+    Comptroller comptroller = getComptroller(pool);
+    comptroller.exitMarket(fToken);
+  }
 }
