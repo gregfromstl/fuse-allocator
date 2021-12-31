@@ -2,7 +2,7 @@
 pragma solidity 0.8.7;
 
 import "./PriceOracle.sol";
-import "./CToken.sol";
+import "./CTokenInterfaces.sol";
 import "./Unitroller.sol";
 import "./RewardsDistributor.sol";
 
