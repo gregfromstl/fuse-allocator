@@ -18,14 +18,19 @@ contract FuseAllocator is Ownable {
     directory = FusePoolDirectory(_directory);
   }
 
-  function depositAll(address tokenAddress) external onlyOwner {
-    fTokenAddress = getfTokenAddress(tokenSymbol); // TODO: IMPLEMENT getfTokenAddress
-
+  /**
+   * @notice Deposit the all tokens in exchange for the corresponding fTokens
+   * @dev The amount of fTokens received is the number of tokens divided by the exchange rate (https://docs.rari.capital/fuse/#exchange-rate)
+   */
+  function deposit(address tokenAddress, address fTokenAddress)
+    external
+    onlyOwner
+  {
     ERC20 token = ERC20(tokenAddress);
-    token.approve(fTokenAddress, token.balanceOf(msg.sender));
+    token.approve(fTokenAddress, amount); // approve the fToken address to transfer 'amount' in tokenAddress
 
     CErc20Interface fToken = CErc20Interface(fTokenAddress);
-    fToken.mint(token.balanceOf(msg.sender));
+    fToken.mint(amount);
   }
 
   // function enterMarkets(string[]) external onlyOwner {
