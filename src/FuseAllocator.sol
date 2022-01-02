@@ -83,7 +83,7 @@ contract FuseAllocator is Ownable {
     comptroller.enterMarkets(fTokens);
   }
 
-  function enterPool(string pool, string fToken) external onlyOwner {
+  function exitPool(string pool, string fToken) external onlyOwner {
     Comptroller comptroller = getComptroller(pool);
     comptroller.exitMarket(fToken);
   }

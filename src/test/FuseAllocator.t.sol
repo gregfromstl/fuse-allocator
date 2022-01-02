@@ -24,13 +24,15 @@ contract SetDirectory is FuseAllocatorTest {
 
 contract Deposit is FuseAllocatorTest {
   function testCanDepositTokens(uint256 amount) {
+    // check for zero amounts
     // give allocator amount of tokens
     // given deposit is called by alice
-    // assertEq(fToken.balanceOf(address(allocator)), amount / getExchangeRate)
+    // assertEq(fToken.balanceOf(address(allocator)), amount / getExchangeRate) -- do we only need to check > 0? the exact amount is responsibility of the fToken contract
     // assertEq(token.balanceOf(address(allocator)), 0)
   }
 
   function testAliceLosesNoTokensOnDeposit(uint256 amount) {
+    // check for zero amounts
     // give alice amount of tokens
     // give allocator amount of tokens
     // given deposit is called by alice
@@ -48,9 +50,10 @@ contract Deposit is FuseAllocatorTest {
     uint256 initialAmount,
     uint256 laterAmount
   ) {
+    // check for zero amounts
     // give allocator initialAmount of tokens
     // given deposit is called by alice
-    // assertEq(fToken.balanceOf(address(allocator)), initialAmount / getExchangeRate)
+    // assertEq(fToken.balanceOf(address(allocator)), initialAmount / getExchangeRate) -- do we only need to check > 0? the exact amount is responsibility of the fToken contract
     // give allocator laterAmount of tokens
     // given deposit is called by alice
     // assertEq(fToken.balanceOf(address(allocator)), (initialAmount + laterAmount) / getExchangeRate) // assumes the exchange rate does not change between -- need to check
@@ -97,7 +100,7 @@ contract EnterPool is FuseAllocator {
 }
 
 contract ExitPool is FuseAllocator {
-  
+
 }
 
 
