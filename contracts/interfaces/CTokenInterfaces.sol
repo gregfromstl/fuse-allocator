@@ -1,8 +1,9 @@
-pragma solidity ^0.8.7;
+pragma solidity ^0.5.16;
 
 import "./IFuseFeeDistributor.sol";
-import "./Comptroller.sol";
-import "./InterestRateModel.sol";
+import "./ComptrollerStorage.sol";
+import "./ComptrollerInterface.sol";
+import "../InterestRateModel.sol";
 
 contract CTokenAdminStorage {
   /**
@@ -12,28 +13,19 @@ contract CTokenAdminStorage {
     IFuseFeeDistributor(0xa731585ab05fC9f83555cf9Bff8F58ee94e18F85);
 
   /**
-   * @notice Administrator for this contract
+   * @dev LEGACY USE ONLY: Administrator for this contract
    */
-  address payable public admin;
+  address payable internal __admin;
 
   /**
-   * @notice Whether or not the Fuse admin has admin rights
+   * @dev LEGACY USE ONLY: Whether or not the Fuse admin has admin rights
    */
-  bool public fuseAdminHasRights = true;
+  bool internal __fuseAdminHasRights;
 
   /**
-   * @notice Whether or not the admin has admin rights
+   * @dev LEGACY USE ONLY: Whether or not the admin has admin rights
    */
-  bool public adminHasRights = true;
-
-  /**
-   * @notice Returns a boolean indicating if the sender has admin rights
-   */
-  function hasAdminRights() internal view returns (bool) {
-    return
-      (msg.sender == admin && adminHasRights) ||
-      (msg.sender == address(fuseAdmin) && fuseAdminHasRights);
-  }
+  bool internal __adminHasRights;
 }
 
 contract CTokenStorage is CTokenAdminStorage {
@@ -68,9 +60,9 @@ contract CTokenStorage is CTokenAdminStorage {
   uint256 internal constant reserveFactorPlusFeesMaxMantissa = 1e18;
 
   /**
-   * @notice Pending administrator for this contract
+   * @notice LEGACY USE ONLY: Pending administrator for this contract
    */
-  address payable public pendingAdmin;
+  address payable private __pendingAdmin;
 
   /**
    * @notice Contract which oversees inter-cToken operations
@@ -161,6 +153,11 @@ contract CTokenStorage is CTokenAdminStorage {
    * @notice Mapping of account addresses to outstanding borrow balances
    */
   mapping(address => BorrowSnapshot) internal accountBorrows;
+
+  /**
+   * @notice Share of seized collateral that is added to reserves
+   */
+  uint256 public constant protocolSeizeShareMantissa = 2.8e16; //2.8%
 }
 
 contract CTokenInterface is CTokenStorage {
@@ -229,26 +226,6 @@ contract CTokenInterface is CTokenStorage {
   );
 
   /*** Admin Events ***/
-
-  /**
-   * @notice Event emitted when the Fuse admin renounces their rights
-   */
-  event FuseAdminRightsRenounced();
-
-  /**
-   * @notice Event emitted when the admin renounces their rights
-   */
-  event AdminRightsRenounced();
-
-  /**
-   * @notice Event emitted when pendingAdmin is changed
-   */
-  event NewPendingAdmin(address oldPendingAdmin, address newPendingAdmin);
-
-  /**
-   * @notice Event emitted when pendingAdmin is accepted, which means admin is updated
-   */
-  event NewAdmin(address oldAdmin, address newAdmin);
 
   /**
    * @notice Event emitted when comptroller is changed
@@ -378,16 +355,6 @@ contract CTokenInterface is CTokenStorage {
 
   /*** Admin Functions ***/
 
-  function _setPendingAdmin(address payable newPendingAdmin)
-    external
-    returns (uint256);
-
-  function _acceptAdmin() external returns (uint256);
-
-  function _setComptroller(ComptrollerInterface newComptroller)
-    public
-    returns (uint256);
-
   function _setReserveFactor(uint256 newReserveFactorMantissa)
     external
     returns (uint256);
@@ -428,10 +395,6 @@ contract CErc20Interface is CErc20Storage {
     uint256 repayAmount,
     CTokenInterface cTokenCollateral
   ) external returns (uint256);
-
-  /*** Admin Functions ***/
-
-  function _addReserves(uint256 addAmount) external returns (uint256);
 }
 
 contract CEtherInterface is CErc20Storage {
@@ -448,7 +411,7 @@ contract CDelegationStorage {
   address public implementation;
 }
 
-contract CDelegatorInterface is CDelegationStorage {
+contract CDelegateInterface is CDelegationStorage {
   /**
    * @notice Emitted when implementation is changed
    */
@@ -460,23 +423,22 @@ contract CDelegatorInterface is CDelegationStorage {
    * @param allowResign Flag to indicate whether to call _resignImplementation on the old implementation
    * @param becomeImplementationData The encoded bytes data to be passed to _becomeImplementation
    */
-  function _setImplementation(
+  function _setImplementationSafe(
     address implementation_,
     bool allowResign,
-    bytes memory becomeImplementationData
-  ) public;
-}
+    bytes calldata becomeImplementationData
+  ) external;
 
-contract CDelegateInterface is CDelegationStorage {
   /**
    * @notice Called by the delegator on a delegate to initialize it for duty
    * @dev Should revert if any issues arise which make it unfit for delegation
    * @param data The encoded bytes data for any initialization
    */
-  function _becomeImplementation(bytes memory data) public;
+  function _becomeImplementation(bytes calldata data) external;
 
   /**
-   * @notice Called by the delegator on a delegate to forfeit its responsibility
+   * @notice Function called before all delegator functions
+   * @dev Checks comptroller.autoImplementation and upgrades the implementation if necessary
    */
-  function _resignImplementation() public;
+  function _prepare() external payable;
 }

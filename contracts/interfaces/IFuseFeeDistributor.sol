@@ -8,6 +8,4 @@ interface IFuseFeeDistributor {
   function maxUtilizationRate() external view returns (uint256);
 
   function interestFeeRate() external view returns (uint256);
-
-  function() external payable;
 }
